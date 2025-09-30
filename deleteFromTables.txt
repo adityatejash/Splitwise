@@ -1,18 +1,7 @@
--- Select Database
-USE splitwise
-
--- Disable foreign key checks temporarily
-SET FOREIGN_KEY_CHECKS = 0;
-
--- Delete/truncate child tables first
-DELETE FROM settlements;
-DELETE FROM expense_splits;
-DELETE FROM expenses;
-DELETE FROM group_members;
-
--- Then delete parent tables
-DELETE FROM app_groups;
+USE splitwise;
 DELETE FROM app_users;
-
--- Re-enable foreign key checks
-SET FOREIGN_KEY_CHECKS = 1;
+DELETE FROM app_groups;
+DELETE FROM group_members;
+DELETE FROM group_expenses;
+DELETE FROM expense_contributions;
+DELETE FROM expense_splits;

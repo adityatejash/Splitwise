@@ -8,7 +8,7 @@ def connect_db():
     try:
         conn = mysql.connector.connect(
             host='localhost',
-            database='a',  # your database name
+            database='splitwise',  # your database name
             user='root',
             password='05460441'
         )
@@ -243,7 +243,7 @@ def main():
             if user_name == "-1": continue
             add_user(user_name)
             show_table("app_users")
-            show_group_members()
+            # show_group_members()
 
         elif choice == '3':
             show_table("app_users")

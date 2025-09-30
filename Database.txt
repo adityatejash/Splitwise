@@ -1,0 +1,74 @@
+-- Create Database
+CREATE DATABASE splitwise;
+
+-- Use Database
+USE splitwise;
+
+-- 1. Create users table
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(15),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Create user_groups table
+CREATE TABLE user_groups (
+    group_id INT PRIMARY KEY AUTO_INCREMENT,
+    group_name VARCHAR(100) NOT NULL,
+    created_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- 3. Create group_members table
+CREATE TABLE group_members (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    group_id INT NOT NULL,
+    user_id INT NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (group_id) REFERENCES user_groups(group_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_membership (group_id, user_id)
+);
+
+-- 4. Create expenses table
+CREATE TABLE expenses (
+    expense_id INT PRIMARY KEY AUTO_INCREMENT,
+    group_id INT NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    paid_by INT NOT NULL,
+    expense_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (group_id) REFERENCES user_groups(group_id) ON DELETE CASCADE,
+    FOREIGN KEY (paid_by) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- 5. Create expense_splits table
+CREATE TABLE expense_splits (
+    split_id INT PRIMARY KEY AUTO_INCREMENT,
+    expense_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount_owed DECIMAL(10,2) NOT NULL,
+    is_settled BOOLEAN DEFAULT FALSE,
+    settled_at TIMESTAMP NULL,
+    FOREIGN KEY (expense_id) REFERENCES expenses(expense_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- 6. Create settlements table
+CREATE TABLE settlements (
+    settlement_id INT PRIMARY KEY AUTO_INCREMENT,
+    paid_by INT NOT NULL,
+    paid_to INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    settlement_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    group_id INT,
+    notes VARCHAR(255),
+    FOREIGN KEY (paid_by) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (paid_to) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES user_groups(group_id) ON DELETE SET NULL
+);

@@ -8,8 +8,8 @@ def connect_db():
         conn = mysql.connector.connect(
             host='localhost',
             database='splitwise',  # your database name
-            user='root',
-            password='05460441'
+            user='adityaprakash', # your username
+            password='adityapassword' # your username's password
         )
         return conn
     except Error as e:

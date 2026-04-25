@@ -93,7 +93,7 @@ Splitwise/
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/splitwise.git
+git clone https://github.com/adityatejash/splitwise.git
 cd splitwise
 
 # Create and activate a virtual environment

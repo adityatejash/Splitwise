@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('groups.list_groups') }}" class="back-link">← All Groups</a>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ group.name }}</div>
+    <div class="page-subtitle">
+      {{ group.get_member_count() }} member{{ 's' if group.get_member_count() != 1 }}
+      · Created {{ group.created_at.strftime('%d %b %Y') }}
+      {% if group.description %} · {{ group.description }}{% endif %}
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="{{ url_for('expenses.add_expense', group_id=group.id) }}" class="btn btn-primary">+ Add Expense</a>
+    <a href="{{ url_for('expenses.balances', group_id=group.id) }}" class="btn btn-secondary">⚖️ Balances</a>
+    <a href="{{ url_for('groups.export_pdf', group_id=group.id) }}" class="btn btn-secondary">📄 Export PDF</a>
+  </div>
+</div>
+
+<!-- ── INVITE SECTION ── -->
+{% if is_admin %}
+<div class="card" style="margin-bottom:20px;border-color:#d4c5f0;">
+  <div class="card-title">🔗 Invite to Group</div>
+  <div class="grid-2" style="gap:16px;">
+    <div>
+      <label>Invite Link</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="invite-url" value="{{ invite_url }}" readonly style="font-size:0.8rem;color:var(--muted);">
+        <button class="btn btn-secondary btn-sm" onclick="copyInvite()">Copy</button>
+      </div>
+    </div>
+    <div>
+      <label>Join Code</label>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-family:monospace;font-size:1.6rem;font-weight:800;letter-spacing:0.15em;color:var(--accent);">{{ group.join_code }}</span>
+        <span style="font-size:0.8rem;color:var(--muted);">Share this 6-char code</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── PENDING JOIN REQUESTS (ADMIN) ── -->
+{% if is_admin and pending_joins %}
+<div class="card" style="border-color:var(--yellow);margin-bottom:20px;">
+  <div class="card-title">👋 Pending Join Requests <span class="badge badge-pending">{{ pending_joins|length }}</span></div>
+  {% for jr in pending_joins %}
+  <div class="list-item">
+    <div>
+      <div class="list-item-name">{{ jr.user.username }}</div>
+      <div class="list-item-meta">{{ jr.user.email }} · Requested {{ jr.created_at.strftime('%d %b, %H:%M') }}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <form method="POST" action="{{ url_for('groups.approve_join', req_id=jr.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button class="btn btn-success btn-sm">✓ Approve</button>
+      </form>
+      <form method="POST" action="{{ url_for('groups.reject_join', req_id=jr.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button class="btn btn-danger btn-sm">✕ Reject</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── PENDING EDIT REQUESTS (ADMIN) ── -->
+{% if is_admin and pending_edits %}
+<div class="card" style="border-color:var(--yellow);margin-bottom:20px;">
+  <div class="card-title">⏳ Pending Edit Requests <span class="badge badge-pending">{{ pending_edits|length }}</span></div>
+  <table>
+    <thead><tr><th>Expense</th><th>Requested By</th><th>New Description</th><th>New Amount</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for req in pending_edits %}
+      <tr>
+        <td><strong>{{ req.expense.description }}</strong></td>
+        <td>{{ req.requester.username }}</td>
+        <td>{{ req.new_description }}</td>
+        <td><strong>{{ req.new_currency }} {{ '%.2f'|format(req.new_amount|float) }}</strong></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <form method="POST" action="{{ url_for('expenses.approve_request', request_id=req.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button class="btn btn-success btn-xs">✓ Approve</button>
+            </form>
+            <form method="POST" action="{{ url_for('expenses.reject_request', request_id=req.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button class="btn btn-danger btn-xs">✕ Reject</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="grid-2">
+
+  <!-- ── MEMBERS ── -->
+  <div class="card">
+    <div class="card-title">👥 Members ({{ active_members|length }})</div>
+
+    {% for m in active_members %}
+    <div class="list-item">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="nav-avatar" style="width:30px;height:30px;font-size:0.8rem;
+          {% if not m.is_registered %}background:var(--muted);{% endif %}">
+          {{ m.name[0].upper() }}
+        </div>
+        <div>
+          <div class="list-item-name">{{ m.name }}
+            {% if not m.is_registered %}<span style="font-size:0.75rem;color:var(--muted);"> (no account)</span>{% endif %}
+            {% if m.user_id == current_user.id %}<span style="font-size:0.75rem;color:var(--muted);"> (you)</span>{% endif %}
+          </div>
+          {% if m.user %}
+          <div class="list-item-meta">{{ m.user.email }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="badge {{ 'badge-admin' if m.role == 'admin' else 'badge-member' }}">{{ m.role }}</span>
+        {% if is_admin and m.user_id != current_user.id %}
+        <form method="POST" action="{{ url_for('groups.promote_member', group_id=group.id, member_id=m.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <button class="btn btn-secondary btn-xs" title="Toggle admin">{{ '↓' if m.role=='admin' else '↑' }}</button>
+        </form>
+        <form method="POST" action="{{ url_for('groups.remove_member', group_id=group.id, member_id=m.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <button class="btn btn-danger btn-xs" onclick="return confirm('Remove?')">✕</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if is_admin %}
+    <hr>
+    <div style="font-weight:700;font-size:0.9rem;margin-bottom:12px;">➕ Add Member</div>
+
+    <!-- Tab toggle -->
+    <div class="radio-toggle" style="margin-bottom:14px;">
+      <input type="radio" id="add-by-name-radio" name="add_tab" value="name" checked onchange="toggleAddTab()">
+      <label for="add-by-name-radio">By Name</label>
+      <input type="radio" id="add-by-email-radio" name="add_tab" value="email" onchange="toggleAddTab()">
+      <label for="add-by-email-radio">By Email</label>
+    </div>
+
+    <div id="tab-by-name">
+      <form method="POST" action="{{ url_for('groups.add_member', group_id=group.id) }}" style="display:flex;gap:8px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="add_type" value="name">
+        <input type="text" name="member_name" placeholder="e.g. Rahul, Priya..." style="flex:1;margin:0;" required>
+        <button class="btn btn-primary btn-sm">Add</button>
+      </form>
+      <div class="form-hint">No account needed. They'll be included in expense splits.</div>
+    </div>
+
+    <div id="tab-by-email" style="display:none;">
+      <form method="POST" action="{{ url_for('groups.add_member', group_id=group.id) }}" style="display:flex;gap:8px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="add_type" value="email">
+        <input type="email" name="email" placeholder="member@gmail.com" style="flex:1;margin:0;" required>
+        <button class="btn btn-primary btn-sm">Add</button>
+      </form>
+      <div class="form-hint">Must already have a Splitwise account.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── EXPENSES ── -->
+  <div class="card">
+    <div class="card-title">💰 Recent Expenses</div>
+    {% if expenses %}
+      {% for exp in expenses %}
+      <div class="list-item" style="flex-direction:column;align-items:flex-start;gap:6px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:flex-start;">
+          <div>
+            <div class="list-item-name">{{ exp.description }}
+              {% if exp.has_pending_request() %}<span class="badge badge-pending" style="margin-left:6px;">edit pending</span>{% endif %}
+            </div>
+            <div class="list-item-meta">Paid by <strong>{{ exp.payer.name }}</strong> · {{ exp.expense_date }}
+              <span class="badge badge-currency">{{ exp.currency }}</span>
+            </div>
+          </div>
+          <div style="font-weight:800;color:var(--accent);font-size:1rem;flex-shrink:0;">{{ '%.2f'|format(exp.amount|float) }}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <a href="{{ url_for('expenses.edit_expense', expense_id=exp.id) }}" class="btn btn-secondary btn-xs">✏️ Edit</a>
+          {% if is_admin %}
+          <form method="POST" action="{{ url_for('expenses.delete_expense', expense_id=exp.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button class="btn btn-danger btn-xs" onclick="return confirm('Delete?')">🗑️</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('expenses.balances', group_id=group.id) }}" class="btn btn-secondary btn-sm">View Balances →</a>
+      </div>
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon">💸</div>
+        <div class="empty-text">No expenses yet.<br>
+          <a href="{{ url_for('expenses.add_expense', group_id=group.id) }}" style="color:var(--accent);font-weight:700;">Add the first one</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{% if is_admin %}
+<div class="card" style="border-color:var(--red); margin-top: 30px;">
+  <div class="card-title" style="color:var(--red);">⚠️ Danger Zone</div>
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:12px;">
+    Deleting this group will permanently remove all members, expenses, and settlements. This action cannot be undone.
+  </p>
+  <form method="POST" action="{{ url_for('groups.delete_group', group_id=group.id) }}" onsubmit="return confirm('Are you ABSOLUTELY sure you want to delete this group?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <button type="submit" class="btn btn-danger">Delete Group</button>
+  </form>
+</div>
+{% endif %}
+
+<script>
+function toggleAddTab() {
+  const val = document.querySelector('input[name="add_tab"]:checked').value;
+  document.getElementById('tab-by-name').style.display = val === 'name' ? 'block' : 'none';
+  document.getElementById('tab-by-email').style.display = val === 'email' ? 'block' : 'none';
+}
+function copyInvite() {
+  const el = document.getElementById('invite-url');
+  el.select(); document.execCommand('copy');
+  alert('Invite link copied!');
+}
+</script>
+{% endblock %}

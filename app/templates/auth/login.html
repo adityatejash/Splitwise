@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:48px auto;">
+  <div style="text-align:center;margin-bottom:32px;">
+    <div style="font-size:2.5rem;margin-bottom:8px;">💸</div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;">Welcome back</h1>
+    <p style="color:var(--muted);margin-top:6px;">Sign in to your Splitwise account</p>
+  </div>
+
+  <div class="card">
+    <form method="POST" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-group">
+        <label for="email">Gmail / Email</label>
+        <input type="email" id="email" name="email" placeholder="you@gmail.com" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="••••••••" required>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:500;margin:0;cursor:pointer;">
+          <input type="checkbox" name="remember" style="width:auto;"> Remember me
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+        Sign in
+      </button>
+    </form>
+
+    <hr>
+
+    <form method="POST" action="{{ url_for('auth.guest_login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit" class="btn btn-secondary" style="width:100%;justify-content:center;">
+        👻 Continue as Guest
+      </button>
+    </form>
+    <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin-top:8px;">
+      Guest data is lost when you close the tab.
+    </p>
+  </div>
+
+  <p style="text-align:center;margin-top:20px;font-size:0.9rem;color:var(--muted);">
+    Don't have an account?
+    <a href="{{ url_for('auth.register') }}" style="color:var(--accent);font-weight:700;">Create one</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Splitwise{% endblock %} — Group Expense Tracker</title>
+  <meta name="description" content="Track shared expenses, split bills, and settle up with friends.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #faf7f2;
+      --bg2: #f0ebe3;
+      --surface: #ffffff;
+      --border: #e2d9ce;
+      --text: #1a1a2e;
+      --muted: #7a6f65;
+      --accent: #e07a5f;
+      --accent-dark: #c5603f;
+      --green: #3d9970;
+      --green-bg: #edf7f1;
+      --red: #c0392b;
+      --red-bg: #fdf0ef;
+      --yellow: #e8a838;
+      --yellow-bg: #fef9ee;
+      --blue: #3498db;
+      --blue-bg: #eaf4fd;
+      --radius: 12px;
+      --shadow: 0 2px 8px rgba(26,26,46,0.08);
+      --shadow-md: 0 4px 16px rgba(26,26,46,0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      box-shadow: 0 1px 4px rgba(26,26,46,0.06);
+    }
+    .nav-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: var(--bg2);
+      color: var(--text);
+    }
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .nav-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .guest-bar {
+      background: var(--yellow-bg);
+      border-bottom: 1px solid #f0d5a0;
+      padding: 8px 24px;
+      font-size: 0.85rem;
+      color: #7a5c1e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+    .page-header {
+      margin-bottom: 28px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .page-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .page-subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .card + .card { margin-top: 16px; }
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 680px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      nav { padding: 0 16px; }
+      .container { padding: 20px 16px; }
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(224,122,95,0.35); }
+    .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid #f5c6c0; }
+    .btn-danger:hover { background: var(--red); color: #fff; }
+    .btn-success { background: var(--green-bg); color: var(--green); border: 1px solid #b7dfc9; }
+    .btn-success:hover { background: var(--green); color: #fff; }
+    .btn-sm { padding: 5px 13px; font-size: 0.82rem; }
+    .btn-xs { padding: 3px 9px; font-size: 0.78rem; }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── FORMS ── */
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.92rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224,122,95,0.12);
+      background: #fff;
+    }
+    input::placeholder { color: #b8ada4; }
+    .form-hint { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+
+    /* ── FLASH MESSAGES ── */
+    .flashes { margin-bottom: 20px; }
+    .flash {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .flash.success { background: var(--green-bg); color: #2a6e4e; border: 1px solid #b7dfc9; }
+    .flash.error   { background: var(--red-bg); color: var(--red); border: 1px solid #f5c6c0; }
+    .flash.warning { background: var(--yellow-bg); color: #7a5c1e; border: 1px solid #f0d5a0; }
+    .flash.info    { background: var(--blue-bg); color: #1a618e; border: 1px solid #a9d4f0; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-admin { background: #fef0ec; color: var(--accent); border: 1px solid #f5c6b8; }
+    .badge-member { background: var(--bg2); color: var(--muted); border: 1px solid var(--border); }
+    .badge-pending { background: var(--yellow-bg); color: #8a6520; border: 1px solid #f0d5a0; }
+    .badge-approved { background: var(--green-bg); color: var(--green); border: 1px solid #b7dfc9; }
+    .badge-rejected { background: var(--red-bg); color: var(--red); border: 1px solid #f5c6c0; }
+    .badge-currency { background: var(--blue-bg); color: var(--blue); border: 1px solid #a9d4f0; font-size: 0.7rem; }
+
+    /* ── TABLES ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 8px 12px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border-bottom: 2px solid var(--border); }
+    td { padding: 12px 12px; border-bottom: 1px solid var(--bg2); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+
+    /* ── LIST ITEMS ── */
+    .list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      margin-bottom: 10px;
+      gap: 12px;
+      transition: box-shadow 0.15s;
+    }
+    .list-item:hover { box-shadow: var(--shadow); }
+    .list-item-name { font-weight: 700; font-size: 0.95rem; }
+    .list-item-meta { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    .list-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* ── STAT CARDS ── */
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .stat-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; font-weight: 600; }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-text { font-size: 0.9rem; }
+
+    /* ── CHECKBOXES ── */
+    .check-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .check-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .check-pill input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); }
+    .check-pill:has(input:checked) { border-color: var(--accent); background: #fef0ec; color: var(--accent); }
+
+    /* ── DIVIDER ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    /* ── RADIO TOGGLE ── */
+    .radio-toggle { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; width: fit-content; }
+    .radio-toggle label {
+      padding: 7px 18px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin: 0;
+      transition: all 0.15s;
+      background: var(--bg);
+      color: var(--muted);
+    }
+    .radio-toggle input[type="radio"] { display: none; }
+    .radio-toggle input[type="radio"]:checked + label { background: var(--accent); color: #fff; }
+
+    /* ── AMOUNT DISPLAY ── */
+    .amount-pos { color: var(--green); font-weight: 700; }
+    .amount-neg { color: var(--red); font-weight: 700; }
+    .amount-neutral { color: var(--muted); }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 48px;
+    }
+
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<nav>
+  <a class="nav-logo" href="{{ url_for('main.dashboard') }}">💸 <span>Split</span>wise</a>
+  <div class="nav-links">
+    <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <a class="nav-link" href="{{ url_for('groups.list_groups') }}">Groups</a>
+    <a class="nav-link" href="{{ url_for('groups.create_group') }}">+ New Group</a>
+    <a class="nav-link" href="{{ url_for('groups.join_by_code') }}">🔑 Join by Code</a>
+  </div>
+  <div class="nav-user">
+    <div class="nav-avatar">{{ current_user.username[0].upper() }}</div>
+    <span>{{ current_user.username }}</span>
+    {% if current_user.is_guest %}<span class="badge badge-pending">Guest</span>{% endif %}
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+  </div>
+</nav>
+{% if current_user.is_guest %}
+<div class="guest-bar">
+  <span>⚠️ You are browsing as a <strong>guest</strong>. Your data will be lost when you close this tab.</span>
+  <a href="{{ url_for('auth.register') }}" class="btn btn-sm" style="background:#e8a838;color:#fff;">Create Account</a>
+</div>
+{% endif %}
+{% endif %}
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flashes">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">
+            {% if category == 'success' %}✅{% elif category == 'error' %}❌{% elif category == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<footer>
+  Developed by Aditya Prakash<br>
+  GitHub: <a href="https://github.com/adityatejash" target="_blank" style="color:var(--accent);">https://github.com/adityatejash</a> | 
+  LinkedIn: <a href="https://www.linkedin.com/in/adityatejash/" target="_blank" style="color:var(--accent);">adityatejash</a>
+</footer>
+
+{% if current_user.is_authenticated and current_user.is_guest %}
+<script>
+  // Clean up guest on tab close
+  window.addEventListener('beforeunload', function() {
+    navigator.sendBeacon('{{ url_for("auth.guest_cleanup") }}');
+  });
+</script>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}My Groups{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-title">My Groups</div>
+    <div class="page-subtitle">All groups you're a member of.</div>
+  </div>
+  <a href="{{ url_for('groups.create_group') }}" class="btn btn-primary">+ New Group</a>
+</div>
+
+{% if my_groups %}
+  {% for group in my_groups %}
+    <div class="list-item">
+      <div>
+        <div class="list-item-name">{{ group.name }}</div>
+        <div class="list-item-meta">
+          {{ group.get_member_count() }} member{{ 's' if group.get_member_count() != 1 }}
+          · Created {{ group.created_at.strftime('%d %b %Y') }}
+          {% if group.description %} · {{ group.description }}{% endif %}
+        </div>
+      </div>
+      <div class="list-item-actions">
+        {% if group.created_by == current_user.id %}
+          <span class="badge badge-admin">Admin</span>
+        {% endif %}
+        <a href="{{ url_for('groups.detail', group_id=group.id) }}" class="btn btn-secondary btn-sm">View →</a>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="card">
+    <div class="empty">
+      <div class="empty-icon">🏠</div>
+      <div class="empty-text">You haven't joined any groups yet.<br>
+        <a href="{{ url_for('groups.create_group') }}" style="color:var(--accent);font-weight:700;">Create your first group</a>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

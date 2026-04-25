@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Edit Expense{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('groups.detail', group_id=group.id) }}" class="back-link">← {{ group.name }}</a>
+
+<div style="max-width:600px;">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Edit Expense</div>
+      <div class="page-subtitle">
+        {% if is_admin %}Changes will be applied immediately.{% else %}Your edit will be sent to the admin for approval.{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if not is_admin %}
+  <div class="flash info" style="margin-bottom:20px;">
+    ℹ️ As a member, edits require admin approval. The original expense stays active until then.
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <form method="POST" action="{{ url_for('expenses.edit_expense', expense_id=expense.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+      <div class="form-group">
+        <label for="description">Description *</label>
+        <input type="text" id="description" name="description" value="{{ expense.description }}" required maxlength="255">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="amount">Amount *</label>
+          <input type="number" id="amount" name="amount" value="{{ expense.amount }}" min="0.01" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="currency">Currency</label>
+          <select id="currency" name="currency">
+            {% for c in currencies %}
+              <option value="{{ c }}" {% if c == expense.currency %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Split Type</label>
+        <div class="radio-toggle">
+          <input type="radio" id="split-equal" name="split_type" value="equal" checked>
+          <label for="split-equal">Equal Split</label>
+          <input type="radio" id="split-custom" name="split_type" value="custom">
+          <label for="split-custom">Custom Split</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Split Among *</label>
+        <div class="check-grid">
+          {% for member in members %}
+            <label class="check-pill">
+              <input type="checkbox" name="split_members" value="{{ member.id }}"
+                {% if member.id in current_splits %}checked{% endif %}> {{ member.name }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div id="custom-fields" style="display:none;">
+        <hr>
+        <div class="card-title" style="margin-bottom:12px;">Custom Amounts</div>
+        {% for member in members %}
+          <div class="form-row" id="custom-row-{{ member.id }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+              <label style="margin:0;flex:1;">{{ member.name }}</label>
+              <input type="number" name="custom_{{ member.id }}"
+                     value="{{ current_splits.get(member.id, '') }}"
+                     placeholder="0.00" min="0" step="0.01" style="width:120px;margin:0;">
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="submit" class="btn btn-primary">
+          {% if is_admin %}Save Changes{% else %}Submit for Approval{% endif %}
+        </button>
+        <a href="{{ url_for('groups.detail', group_id=group.id) }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function updateCustom() {
+  const splitType = document.querySelector('input[name="split_type"]:checked').value;
+  document.getElementById('custom-fields').style.display = splitType === 'custom' ? 'block' : 'none';
+}
+document.querySelectorAll('input[name="split_type"]').forEach(r => r.addEventListener('change', updateCustom));
+</script>
+{% endblock %}

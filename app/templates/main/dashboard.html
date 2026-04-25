@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Hey, {{ current_user.username }} 👋</div>
+    <div class="page-subtitle">Here's what's happening across your groups.</div>
+  </div>
+  <a href="{{ url_for('groups.create_group') }}" class="btn btn-primary">+ New Group</a>
+</div>
+
+<!-- Stats -->
+<div class="grid-3" style="margin-bottom:28px;">
+  <div class="stat-card">
+    <div class="stat-val">{{ my_groups|length }}</div>
+    <div class="stat-label">My Groups</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val">{{ total_expenses }}</div>
+    <div class="stat-label">Total Expenses</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="{% if pending_count > 0 %}color:var(--yellow){% endif %}">{{ pending_count }}</div>
+    <div class="stat-label">Pending Approvals</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- My Groups -->
+  <div class="card">
+    <div class="card-title">🏠 My Groups</div>
+    {% if my_groups %}
+      {% for group in my_groups %}
+        <div class="list-item">
+          <div>
+            <div class="list-item-name">{{ group.name }}</div>
+            <div class="list-item-meta">{{ group.get_member_count() }} member{{ 's' if group.get_member_count() != 1 }}
+              {% if group.created_by == current_user.id %}
+                · <span class="badge badge-admin">Admin</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="list-item-actions">
+            <a href="{{ url_for('groups.detail', group_id=group.id) }}" class="btn btn-secondary btn-sm">View</a>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon">🏠</div>
+        <div class="empty-text">No groups yet.<br><a href="{{ url_for('groups.create_group') }}" style="color:var(--accent);font-weight:700;">Create your first group</a></div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Expenses -->
+  <div class="card">
+    <div class="card-title">💰 Recent Expenses</div>
+    {% if recent %}
+      {% for exp in recent %}
+        <div class="list-item">
+          <div>
+            <div class="list-item-name">{{ exp.description }}</div>
+            <div class="list-item-meta">
+              {{ exp.group.name }} · {{ exp.expense_date }}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700;color:var(--accent);">{{ exp.currency }} {{ '%.2f'|format(exp.amount|float) }}</div>
+            <div class="list-item-meta">paid by {{ exp.payer.name }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon">💸</div>
+        <div class="empty-text">No expenses yet.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

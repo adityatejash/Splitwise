@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Join by Code{% endblock %}
+{% block content %}
+<div style="max-width:400px;margin:60px auto;">
+  <div style="text-align:center;margin-bottom:32px;">
+    <div style="font-size:3rem;">🔑</div>
+    <div class="page-title" style="margin-top:8px;">Join a Group</div>
+    <p style="color:var(--muted);margin-top:6px;">Enter the 6-character join code shared by the group admin.</p>
+  </div>
+
+  <div class="card">
+    <form method="POST" action="{{ url_for('groups.join_by_code') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-group">
+        <label for="code">Join Code</label>
+        <input type="text" id="code" name="code" placeholder="e.g. AB3X7K"
+               maxlength="6" style="text-transform:uppercase;letter-spacing:0.2em;font-size:1.3rem;text-align:center;"
+               required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+        Find Group →
+      </button>
+    </form>
+  </div>
+
+  <p style="text-align:center;margin-top:20px;font-size:0.85rem;color:var(--muted);">
+    Have an invite link? Just click it directly.
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splitwise — Group Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #7c6af7;
+    --accent2: #f7a06a;
+    --green: #4ade80;
+    --red: #f87171;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo span { color: var(--accent); }
+  .nav-tabs { display: flex; gap: 4px; }
+  .tab-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .tab-btn:hover { color: var(--text); border-color: var(--border); }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 60px 0 40px;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero p { color: var(--muted); font-size: 0.95rem; max-width: 480px; margin: 0 auto; }
+
+  /* SECTIONS */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* GRID */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } .nav-tabs { display: none; } }
+
+  /* FORM ELEMENTS */
+  input, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6a58e8; transform: translateY(-1px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+
+  /* LIST ITEMS */
+  .list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .list-item:hover { border-color: var(--border); }
+  .list-item .name { font-size: 0.9rem; }
+  .list-item .meta { font-size: 0.75rem; color: var(--muted); }
+  .badge {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* GROUP SELECTOR */
+  .group-selector {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .group-chip {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .group-chip.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* EXPENSE FORM */
+  .contributor-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .contributor-row .row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .contributor-row .row-title {
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+  }
+  .checkboxes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .checkbox-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 0.78rem;
+    transition: all 0.2s;
+  }
+  .checkbox-pill input { width: auto; margin: 0; padding: 0; }
+  .checkbox-pill:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.15);
+    color: var(--accent);
+  }
+
+  /* BALANCE CARDS */
+  .balance-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--surface2);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--accent);
+  }
+  .balance-from { font-size: 0.9rem; font-weight: 500; }
+  .balance-arrow { color: var(--muted); font-size: 1.2rem; }
+  .balance-to { font-size: 0.9rem; font-weight: 500; color: var(--green); }
+  .balance-amount {
+    margin-left: auto;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent2);
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--green); }
+  .toast.error { border-color: var(--red); }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .empty .icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+  /* STAT CHIPS */
+  .stats { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px;
+    justify-content: space-around;
+    z-index: 100;
+  }
+  .mobile-nav .tab-btn { flex-direction: column; font-size: 0.65rem; padding: 6px 10px; }
+  @media (max-width: 700px) { .mobile-nav { display: flex; } body { padding-bottom: 70px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">💸 <span>Split</span>wise</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="showTab('groups')">Groups</button>
+    <button class="tab-btn" onclick="showTab('users')">Users</button>
+    <button class="tab-btn" onclick="showTab('expenses')">Expenses</button>
+    <button class="tab-btn" onclick="showTab('balances')">Balances</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="section active">
+    <div class="hero">
+      <h1>Track expenses,<br><em>settle debts</em> easily.</h1>
+      <p>Add groups, log who paid what, and instantly see who owes whom.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="stat-groups">0</div><div class="stat-label">Groups</div></div>
+      <div class="stat"><div class="stat-val" id="stat-users">0</div><div class="stat-label">Users</div></div>
+      <div class="stat"><div class="stat-val" id="stat-expenses">0</div><div class="stat-label">Expenses</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Quick Start</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <button class="btn btn-secondary" onclick="showTab('groups')">➕ Create a Group</button>
+        <button class="btn btn-secondary" onclick="showTab('users')">👤 Add Users</button>
+        <button class="btn btn-secondary" onclick="showTab('expenses')">💰 Log Expense</button>
+        <button class="btn btn-secondary" onclick="showTab('balances')">⚖️ See Balances</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUPS -->
+  <div id="tab-groups" class="section">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div> Create Group</div>
+        <label>Group Name</label>
+        <input type="text" id="group-name-input" placeholder="e.g. Goa Trip, Flat Mates...">
+        <button class="btn btn-primary" onclick="addGroup()">Create Group</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div> All Groups</div>
+        <div id="groups-list"><div class="empty"><div class="icon">🏠</div>No groups yet</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div id="tab-users" class="section">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div> Add User</div>
+        <label>User Name</label>
+        <input type="text" id="user-name-input" placeholder="e.g. Aditya, Priya...">
+        <button class="btn btn-primary" onclick="addUser()">Add User</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div> All Users</div>
+        <div id="users-list"><div class="empty"><div class="icon">👤</div>No users yet</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Add Users to Group</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <label>Select Group</label>
+          <select id="member-group-select"><option value="">Choose group...</option></select>
+        </div>
+        <div>
+          <label>Select Users</label>
+          <select id="member-user-select" multiple style="height:120px;">
+          </select>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Hold Ctrl/Cmd to select multiple</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:8px;" onclick="addMembersToGroup()">Add to Group</button>
+    </div>
+  </div>
+
+  <!-- EXPENSES -->
+  <div id="tab-expenses" class="section">
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Select Group</div>
+      <div class="group-selector" id="expense-group-chips">
+        <div class="empty" style="padding:10px;">Load groups first...</div>
+      </div>
+    </div>
+
+    <div id="expense-form-area" style="display:none;">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title"><div class="dot"></div> Add Expense</div>
+          <label>Description</label>
+          <input type="text" id="expense-desc" placeholder="e.g. Hotel, Dinner, Cab...">
+          <hr>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <label style="margin:0;">Contributors</label>
+            <button class="btn btn-secondary btn-sm" onclick="addContributorRow()">+ Add Contributor</button>
+          </div>
+          <div id="contributors-container"></div>
+          <button class="btn btn-primary" style="margin-top:8px;width:100%;" onclick="submitExpense()">💾 Save Expense</button>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="dot"></div> Expenses in Group</div>
+          <div id="expenses-list"><div class="empty"><div class="icon">💸</div>No expenses yet</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BALANCES -->
+  <div id="tab-balances" class="section">
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Select Group</div>
+      <div class="group-selector" id="balance-group-chips">
+        <div class="empty" style="padding:10px;">Load groups first...</div>
+      </div>
+    </div>
+    <div id="balances-area" style="display:none;">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div> Who Pays Whom</div>
+        <div id="balances-list"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav">
+  <button class="tab-btn active" onclick="showTab('dashboard')">🏠<br>Home</button>
+  <button class="tab-btn" onclick="showTab('groups')">🏠<br>Groups</button>
+  <button class="tab-btn" onclick="showTab('users')">👤<br>Users</button>
+  <button class="tab-btn" onclick="showTab('expenses')">💰<br>Expenses</button>
+  <button class="tab-btn" onclick="showTab('balances')">⚖️<br>Balances</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allGroups = [];
+let allUsers = [];
+let selectedExpenseGroup = null;
+let selectedBalanceGroup = null;
+let groupMembers = [];
+
+// ---- TABS ----
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(name) || b.getAttribute('onclick')?.includes(name))
+      b.classList.add('active');
+  });
+  if (name === 'dashboard') loadStats();
+  if (name === 'groups') loadGroups();
+  if (name === 'users') { loadUsers(); loadGroupsForSelects(); }
+  if (name === 'expenses') { loadGroupChips('expense'); }
+  if (name === 'balances') { loadGroupChips('balance'); }
+}
+
+// ---- TOAST ----
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ---- STATS ----
+async function loadStats() {
+  const [g, u] = await Promise.all([fetch('/api/groups').then(r=>r.json()), fetch('/api/users').then(r=>r.json())]);
+  document.getElementById('stat-groups').textContent = g.length;
+  document.getElementById('stat-users').textContent = u.length;
+  // count total expenses across all groups
+  let total = 0;
+  for (const group of g) {
+    const ex = await fetch(`/api/groups/${group.group_id}/expenses`).then(r=>r.json());
+    total += ex.length;
+  }
+  document.getElementById('stat-expenses').textContent = total;
+}
+
+// ---- GROUPS ----
+async function loadGroups() {
+  const res = await fetch('/api/groups');
+  allGroups = await res.json();
+  const el = document.getElementById('groups-list');
+  if (!allGroups.length) { el.innerHTML = '<div class="empty"><div class="icon">🏠</div>No groups yet</div>'; return; }
+  el.innerHTML = allGroups.map(g => `
+    <div class="list-item">
+      <div><div class="name">${g.group_name}</div><div class="meta">Created ${g.created_date || ''}</div></div>
+      <span class="badge">#${g.group_id}</span>
+    </div>`).join('');
+}
+
+async function addGroup() {
+  const name = document.getElementById('group-name-input').value.trim();
+  if (!name) return toast('Enter a group name', 'error');
+  const res = await fetch('/api/groups', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({group_name: name}) });
+  const data = await res.json();
+  if (data.success) { toast(`Group "${name}" created!`); document.getElementById('group-name-input').value = ''; loadGroups(); }
+  else toast(data.error, 'error');
+}
+
+// ---- USERS ----
+async function loadUsers() {
+  const res = await fetch('/api/users');
+  allUsers = await res.json();
+  const el = document.getElementById('users-list');
+  if (!allUsers.length) { el.innerHTML = '<div class="empty"><div class="icon">👤</div>No users yet</div>'; return; }
+  el.innerHTML = allUsers.map(u => `
+    <div class="list-item">
+      <div class="name">${u.user_name}</div>
+      <span class="badge">#${u.user_id}</span>
+    </div>`).join('');
+  // update user select
+  const sel = document.getElementById('member-user-select');
+  sel.innerHTML = allUsers.map(u => `<option value="${u.user_id}">${u.user_name}</option>`).join('');
+}
+
+async function addUser() {
+  const name = document.getElementById('user-name-input').value.trim();
+  if (!name) return toast('Enter a user name', 'error');
+  const res = await fetch('/api/users', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user_name: name}) });
+  const data = await res.json();
+  if (data.success) { toast(`User "${name}" added!`); document.getElementById('user-name-input').value = ''; loadUsers(); }
+  else toast(data.error, 'error');
+}
+
+async function loadGroupsForSelects() {
+  const res = await fetch('/api/groups');
+  allGroups = await res.json();
+  const sel = document.getElementById('member-group-select');
+  sel.innerHTML = '<option value="">Choose group...</option>' + allGroups.map(g => `<option value="${g.group_id}">${g.group_name}</option>`).join('');
+}
+
+async function addMembersToGroup() {
+  const groupId = document.getElementById('member-group-select').value;
+  const userSel = document.getElementById('member-user-select');
+  const userIds = Array.from(userSel.selectedOptions).map(o => parseInt(o.value));
+  if (!groupId) return toast('Select a group', 'error');
+  if (!userIds.length) return toast('Select at least one user', 'error');
+  const res = await fetch(`/api/groups/${groupId}/members`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user_ids: userIds}) });
+  const data = await res.json();
+  toast(`Added ${data.added.length} user(s). Skipped ${data.skipped.length} duplicate(s).`);
+}
+
+// ---- GROUP CHIPS ----
+async function loadGroupChips(context) {
+  const res = await fetch('/api/groups');
+  allGroups = await res.json();
+  const el = document.getElementById(context + '-group-chips');
+  if (!allGroups.length) { el.innerHTML = '<div class="empty" style="padding:10px;">No groups yet. Create one first.</div>'; return; }
+  el.innerHTML = allGroups.map(g => `
+    <button class="group-chip" onclick="selectGroup('${context}', ${g.group_id}, '${g.group_name}', this)">${g.group_name}</button>
+  `).join('');
+}
+
+async function selectGroup(context, groupId, groupName, el) {
+  document.querySelectorAll(`#${context}-group-chips .group-chip`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  if (context === 'expense') {
+    selectedExpenseGroup = groupId;
+    document.getElementById('expense-form-area').style.display = 'block';
+    // load members for this group
+    const res = await fetch(`/api/groups/${groupId}/members`);
+    groupMembers = await res.json();
+    document.getElementById('contributors-container').innerHTML = '';
+    addContributorRow();
+    loadExpenses(groupId);
+  } else {
+    selectedBalanceGroup = groupId;
+    document.getElementById('balances-area').style.display = 'block';
+    loadBalances(groupId);
+  }
+}
+
+// ---- EXPENSES ----
+function addContributorRow() {
+  if (!groupMembers.length) return toast('No members in this group. Add members first.', 'error');
+  const idx = Date.now();
+  const memberOptions = groupMembers.map(m => `<option value="${m.user_id}">${m.user_name}</option>`).join('');
+  const memberCheckboxes = groupMembers.map(m => `
+    <label class="checkbox-pill">
+      <input type="checkbox" value="${m.user_id}" checked> ${m.user_name}
+    </label>`).join('');
+  const row = document.createElement('div');
+  row.className = 'contributor-row';
+  row.id = 'contrib-' + idx;
+  row.innerHTML = `
+    <div class="row-header">
+      <span class="row-title">Contributor</span>
+      <button class="remove-btn" onclick="this.closest('.contributor-row').remove()">✕</button>
+    </div>
+    <label>Who paid?</label>
+    <select class="contrib-user">${memberOptions}</select>
+    <label>Amount paid (₹)</label>
+    <input type="number" class="contrib-amount" placeholder="0.00" min="0" step="0.01">
+    <label>Paid for (select members)</label>
+    <div class="checkboxes">${memberCheckboxes}</div>
+  `;
+  document.getElementById('contributors-container').appendChild(row);
+}
+
+async function submitExpense() {
+  const desc = document.getElementById('expense-desc').value.trim();
+  if (!desc) return toast('Enter expense description', 'error');
+  if (!selectedExpenseGroup) return toast('Select a group', 'error');
+
+  const rows = document.querySelectorAll('.contributor-row');
+  if (!rows.length) return toast('Add at least one contributor', 'error');
+
+  const contributions = [];
+  for (const row of rows) {
+    const userId = row.querySelector('.contrib-user').value;
+    const amount = parseFloat(row.querySelector('.contrib-amount').value);
+    const participants = Array.from(row.querySelectorAll('.checkboxes input:checked')).map(c => c.value);
+    if (!amount || amount <= 0) return toast('Enter valid amount for each contributor', 'error');
+    if (!participants.length) return toast('Select at least one participant', 'error');
+    contributions.push({ user_id: userId, amount_paid: amount, participants });
+  }
+
+  const res = await fetch(`/api/groups/${selectedExpenseGroup}/expenses`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ description: desc, contributions })
+  });
+  const data = await res.json();
+  if (data.success) {
+    toast(`Expense "${desc}" saved! Total ₹${data.total_amount}`);
+    document.getElementById('expense-desc').value = '';
+    document.getElementById('contributors-container').innerHTML = '';
+    addContributorRow();
+    loadExpenses(selectedExpenseGroup);
+  } else toast(data.error, 'error');
+}
+
+async function loadExpenses(groupId) {
+  const res = await fetch(`/api/groups/${groupId}/expenses`);
+  const expenses = await res.json();
+  const el = document.getElementById('expenses-list');
+  if (!expenses.length) { el.innerHTML = '<div class="empty"><div class="icon">💸</div>No expenses yet</div>'; return; }
+  el.innerHTML = expenses.map(e => `
+    <div class="list-item">
+      <div>
+        <div class="name">${e.description}</div>
+        <div class="meta">${e.contributors || ''} · ${e.expense_date || ''}</div>
+      </div>
+      <span style="color:var(--accent2);font-weight:600;">₹${e.total_amount.toFixed(2)}</span>
+    </div>`).join('');
+}
+
+// ---- BALANCES ----
+async function loadBalances(groupId) {
+  const res = await fetch(`/api/groups/${groupId}/balances`);
+  const settlements = await res.json();
+  const el = document.getElementById('balances-list');
+  if (!settlements.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">✅</div>All settled up! No one owes anything.</div>';
+    return;
+  }
+  el.innerHTML = settlements.map(s => `
+    <div class="balance-item">
+      <span class="balance-from">${s.from}</span>
+      <span class="balance-arrow">→</span>
+      <span class="balance-to">${s.to}</span>
+      <span class="balance-amount">₹${s.amount.toFixed(2)}</span>
+    </div>`).join('');
+}
+
+// ---- INIT ----
+loadStats();
+</script>
+</body>
+</html>

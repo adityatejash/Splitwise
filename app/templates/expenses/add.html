@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Add Expense — {{ group.name }}{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('groups.detail', group_id=group.id) }}" class="back-link">← {{ group.name }}</a>
+
+<div style="max-width:620px;">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Add Expense</div>
+      <div class="page-subtitle">in <strong>{{ group.name }}</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="POST" action="{{ url_for('expenses.add_expense', group_id=group.id) }}" id="expense-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+      <div class="form-group">
+        <label for="description">Description *</label>
+        <input type="text" id="description" name="description" placeholder="e.g. Hotel, Dinner, Cab..." required maxlength="255">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="amount">Amount *</label>
+          <input type="number" id="amount" name="amount" placeholder="0.00" min="0.01" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="currency">Currency</label>
+          <select id="currency" name="currency">
+            {% for c in currencies %}
+            <option value="{{ c }}" {% if c == 'INR' %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="paid_by_member_id">Paid By *</label>
+        <select id="paid_by_member_id" name="paid_by_member_id" required>
+          {% for m in members %}
+          <option value="{{ m.id }}" {% if my_member and m.id == my_member.id %}selected{% endif %}>
+            {{ m.name }}{% if not m.is_registered %} (no account){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Split Type</label>
+        <div class="radio-toggle">
+          <input type="radio" id="split-equal" name="split_type" value="equal" checked>
+          <label for="split-equal">Equal Split</label>
+          <input type="radio" id="split-custom" name="split_type" value="custom">
+          <label for="split-custom">Custom Split</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Split Among *</label>
+        <div class="check-grid">
+          {% for m in members %}
+          <label class="check-pill">
+            <input type="checkbox" name="split_members" value="{{ m.id }}" checked> {{ m.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div id="custom-fields" style="display:none;">
+        <hr>
+        <div style="font-weight:700;margin-bottom:12px;">Custom Amounts</div>
+        {% for m in members %}
+        <div id="custom-row-{{ m.id }}" style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg2);">
+          <div class="nav-avatar" style="width:28px;height:28px;font-size:0.75rem;flex-shrink:0;">{{ m.name[0].upper() }}</div>
+          <span style="flex:1;font-weight:600;">{{ m.name }}</span>
+          <input type="number" name="custom_{{ m.id }}" placeholder="0.00" min="0" step="0.01" style="width:110px;margin:0;">
+        </div>
+        {% endfor %}
+        <div class="form-hint" id="custom-hint" style="margin-top:8px;"></div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="submit" class="btn btn-primary">Save Expense</button>
+        <a href="{{ url_for('groups.detail', group_id=group.id) }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function refreshCustom() {
+  const type = document.querySelector('input[name="split_type"]:checked').value;
+  const checked = [...document.querySelectorAll('input[name="split_members"]:checked')].map(c => c.value);
+  document.getElementById('custom-fields').style.display = type === 'custom' ? 'block' : 'none';
+  document.querySelectorAll('[id^="custom-row-"]').forEach(row => {
+    const id = row.id.replace('custom-row-', '');
+    row.style.display = checked.includes(id) ? 'flex' : 'none';
+  });
+}
+document.querySelectorAll('input[name="split_type"]').forEach(r => r.addEventListener('change', refreshCustom));
+document.querySelectorAll('input[name="split_members"]').forEach(c => c.addEventListener('change', refreshCustom));
+document.getElementById('expense-form').addEventListener('input', () => {
+  const total = parseFloat(document.getElementById('amount').value) || 0;
+  const sum = [...document.querySelectorAll('[name^="custom_"]')]
+    .filter(i => i.closest('[style*="flex"]'))
+    .reduce((a, i) => a + (parseFloat(i.value) || 0), 0);
+  const h = document.getElementById('custom-hint');
+  if (h) { const ok = Math.abs(sum - total) <= 0.10;
+    h.textContent = `Sum: ${sum.toFixed(2)} / Total: ${total.toFixed(2)} ${ok ? '✅' : '⚠️ Must match total'}`;
+    h.style.color = ok ? 'var(--green)' : 'var(--red)'; }
+});
+</script>
+{% endblock %}

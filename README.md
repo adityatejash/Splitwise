@@ -54,7 +54,7 @@ amount_paid               amount_owed
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/splitwise.git
+git clone https://github.com/adityatejash/splitwise.git
 cd splitwise
 ```
 

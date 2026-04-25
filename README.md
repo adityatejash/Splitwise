@@ -1,90 +1,171 @@
-# Splitwise Clone - Group Expense Tracker
+# Splitwise Clone
 
-A fully functional, production-ready web application to track shared expenses, split bills, and settle balances among friends.
+A full-stack expense splitting web application built with **Flask** and **SQLAlchemy**, inspired by Splitwise. It lets groups of people track shared expenses, split costs, and settle debts — with multi-currency support, PDF export, and a role-based permission system.
+
+---
 
 ## Features
-- **Secure Authentication**: Hashed passwords, session management, and rate-limited logins.
-- **Guest Sessions**: Ephemeral accounts for quick testing.
-- **Group Management**: Create groups (max 5 per user), invite members via URL or join codes.
-- **Flexible Members**: Add members by name (no account required) or email.
-- **Expense Tracking**: Add, edit, and delete shared expenses with equal or custom split options.
-- **Automated Balances**: Smart settlement calculations (who owes whom) with multi-currency support.
-- **Export**: Download group summaries as cleanly formatted PDFs.
-- **Security**: Full CSRF protection, SQLAlchemy ORM (prevents SQL injection).
+
+- **User Authentication** — Register, login, logout with secure password hashing. Rate-limited login (5 attempts/minute) to prevent brute-force attacks.
+- **Guest Mode** — Try the app without an account. Guest sessions are ephemeral and cleaned up automatically on logout or tab close.
+- **Group Management** — Create and manage groups with invite links and 6-character join codes. Up to 5 groups per user (free tier).
+- **Flexible Membership** — Add members by email (registered users) or by name (non-registered participants). Admins can approve/reject join requests.
+- **Expense Tracking** — Log expenses with description, amount, currency, date, and who paid.
+- **Smart Splitting** — Split expenses equally among selected participants, or define custom split amounts per person.
+- **Balance Calculation** — Greedy debt-minimization algorithm calculates the minimum number of transactions needed to settle all debts.
+- **Multi-Currency Support** — Supports INR, USD, EUR, GBP, JPY, AUD, CAD, SGD. Balances are tracked per currency.
+- **Edit Requests** — Non-admin members can request edits to expenses; admins review and approve or reject.
+- **PDF Export** — Download a full group summary (members, expenses, settlements) as a formatted PDF using ReportLab.
+- **CSRF Protection** — All forms protected against Cross-Site Request Forgery.
+- **Custom Error Pages** — Friendly 404 and 500 error pages.
 
 ---
 
-## Deployment (Render Free Tier)
+## Tech Stack
 
-This application is configured for direct deployment on [Render](https://render.com).
+| Layer | Technology |
+|---|---|
+| Backend | Python 3, Flask |
+| Database ORM | Flask-SQLAlchemy |
+| Authentication | Flask-Login, Werkzeug |
+| Forms & Security | Flask-WTF (CSRF), Flask-Limiter |
+| PDF Generation | ReportLab |
+| Templating | Jinja2 |
+| Database | SQLite (dev) / MySQL / PostgreSQL (prod) |
+| Deployment | Gunicorn + Procfile (Render/Heroku-compatible) |
 
-### 1. Push to GitHub
-First, commit all your files and push them to a public or private GitHub repository:
+---
+
+## Project Structure
+
+```
+Splitwise/
+├── app/
+│   ├── __init__.py          # App factory, extensions init
+│   ├── models.py            # SQLAlchemy models
+│   ├── auth/
+│   │   └── routes.py        # Register, login, logout, guest session
+│   ├── groups/
+│   │   ├── routes.py        # Group CRUD, membership, join requests
+│   │   └── pdf.py           # PDF report generation
+│   ├── expenses/
+│   │   └── routes.py        # Add/edit expenses, balance calculation
+│   ├── main/
+│   │   └── routes.py        # Dashboard
+│   └── templates/
+│       ├── base.html
+│       ├── auth/            # login.html, register.html
+│       ├── groups/          # list, create, detail, join, join_code
+│       ├── expenses/        # add, edit, balances
+│       ├── main/            # dashboard
+│       └── errors/          # 404, 500
+├── config.py                # Configuration classes (dev/prod)
+├── run.py                   # Entry point + Flask CLI commands
+├── database_setup.sql       # Raw SQL schema (reference)
+├── requirements.txt
+├── Procfile                 # For Render/Heroku deployment
+├── runtime.txt              # Python version pin
+└── .env.example             # Environment variable template
+```
+
+---
+
+## Database Models
+
+- **User** — Registered and guest accounts with hashed passwords.
+- **Group** — A shared expense group with a unique invite token and join code.
+- **GroupMember** — Join table linking users to groups, with roles (`admin`/`member`) and statuses (`active`/`pending`). Supports non-registered participants (name-only).
+- **JoinRequest** — Tracks pending/approved/rejected requests to join a group.
+- **Expense** — A logged expense with amount, currency, payer, and date.
+- **ExpenseSplit** — Records each member's share of an expense.
+- **EditRequest** — A member's proposal to change an existing expense, pending admin review.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10+
+- pip
+
+### Installation
+
 ```bash
-<<<<<<< HEAD
-git clone https://github.com/adityatejash/splitwise.git
+# Clone the repository
+git clone https://github.com/your-username/splitwise.git
 cd splitwise
-=======
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo>.git
-git push -u origin main
->>>>>>> ccc4104 (Ready for trial deployment)
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate      # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env and set your SECRET_KEY and DATABASE_URL
 ```
 
-### 2. Create Render Web Service
-1. Go to your Render Dashboard and create a **New Web Service**.
-2. Connect your GitHub repository.
-3. Configure the service:
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn run:app --workers 2 --threads 4 --bind 0.0.0.0:$PORT`
-   - **Instance Type**: Free
+### Running Locally
 
-### 3. Create Render PostgreSQL Database
-1. Go to Render Dashboard -> **New PostgreSQL**.
-2. Name it (e.g., `splitwise-db`) and select the Free tier.
-3. Once created, copy the **Internal Database URL** (if deploying Web Service in the same region) or **External Database URL**.
+```bash
+# Initialize the database
+flask init-db
 
-### 4. Set Environment Variables
-Go to your Web Service **Environment** tab and add the following variables:
-- `FLASK_ENV`: `production`
-- `SECRET_KEY`: `<generate a long random string>`
-- `DATABASE_URL`: `<paste your PostgreSQL URL here>` *(The app automatically handles Render's `postgres://` to `postgresql://` conversion).*
+# Start the development server
+python run.py
+```
 
-**That's it!** Render will deploy your application. The database tables will be automatically created on the first successful startup.
+The app will be available at `http://127.0.0.1:5000`.
+
+### Environment Variables
+
+| Variable | Description | Example |
+|---|---|---|
+| `SECRET_KEY` | Flask secret key for sessions | `change-this-to-a-long-random-string` |
+| `DATABASE_URL` | Database connection string | `sqlite:///splitwise.db` |
+| `FLASK_ENV` | Environment (`development`/`production`) | `development` |
 
 ---
 
-## Local Development Setup
+## Deployment (Render / Heroku)
 
-1. **Clone the repository**
-2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Environment Variables**
-   Rename `.env.example` to `.env` and fill in the values. For local testing, the default SQLite config works perfectly.
-5. **Run the app**
-   ```bash
-   python run.py
-   ```
+The project includes a `Procfile` for WSGI deployment:
 
-## Database Migrations (Optional)
-If you modify the database models (`app/models.py`), you can use Flask-Migrate to update the schema:
-```bash
-flask db init      # Only run once to create the migrations folder
-flask db migrate -m "Added new column"
-flask db upgrade
+```
+web: gunicorn run:app
 ```
 
-## Developer
-Developed by Aditya Prakash  
-[GitHub Profile](https://github.com/adityatejash) | [LinkedIn Profile](https://www.linkedin.com/in/adityatejash/)
+Set the environment variables (`SECRET_KEY`, `DATABASE_URL`) in your hosting platform's dashboard and deploy. For PostgreSQL on Render:
+
+```
+DATABASE_URL=postgresql://user:password@host/dbname
+```
+
+---
+
+## Supported Currencies
+
+INR · USD · EUR · GBP · JPY · AUD · CAD · SGD
+
+Expenses are tracked per currency. Balances and settlements are calculated independently for each currency within a group.
+
+---
+
+## How Balance Settlement Works
+
+The app uses a **greedy debt minimization** algorithm:
+
+1. Compute each member's net balance (total paid minus total owed) per currency.
+2. Sort creditors (positive balance) and debtors (negative balance).
+3. Greedily match the largest creditor with the largest debtor to minimize the number of transactions.
+
+This produces the fewest possible payments needed to fully settle all debts.
+
+---
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).

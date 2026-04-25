@@ -8,7 +8,7 @@ from . import auth
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and not getattr(current_user, 'is_guest', False):
         return redirect(url_for('main.dashboard'))
 
     if request.method == 'POST':
@@ -47,6 +47,19 @@ def register():
         db.session.add(user)
         db.session.commit()
 
+        # Clean up guest session if they are registering from one
+        was_guest = getattr(current_user, 'is_guest', False)
+        guest_id = getattr(current_user, 'id', None)
+        
+        if current_user.is_authenticated:
+            logout_user()
+            
+        if was_guest and guest_id:
+            guest = User.query.get(guest_id)
+            if guest:
+                db.session.delete(guest)
+                db.session.commit()
+
         login_user(user)
         flash(f'Welcome, {username}! Your account has been created.', 'success')
         return redirect(url_for('main.dashboard'))
@@ -57,7 +70,7 @@ def register():
 @auth.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
 def login():
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and not getattr(current_user, 'is_guest', False):
         return redirect(url_for('main.dashboard'))
 
     if request.method == 'POST':
@@ -74,6 +87,19 @@ def login():
         if user is None or not user.check_password(password):
             flash('Invalid email or password.', 'error')
             return render_template('auth/login.html')
+
+        # Clean up guest session if they are logging in from one
+        was_guest = getattr(current_user, 'is_guest', False)
+        guest_id = getattr(current_user, 'id', None)
+        
+        if current_user.is_authenticated:
+            logout_user()
+            
+        if was_guest and guest_id:
+            guest = User.query.get(guest_id)
+            if guest:
+                db.session.delete(guest)
+                db.session.commit()
 
         login_user(user, remember=remember)
         next_page = request.args.get('next')
@@ -103,26 +129,32 @@ def guest_login():
 def guest_cleanup():
     """Called by JS beforeunload to delete guest user."""
     if current_user.is_authenticated and getattr(current_user, 'is_guest', False):
-        user = current_user._get_current_object()
-        if hasattr(user, 'id') and user.id:
-            db.session.delete(user)
-            db.session.commit()
+        user_id = getattr(current_user, 'id', None)
         logout_user()
+        
+        if user_id:
+            guest = User.query.get(user_id)
+            if guest:
+                db.session.delete(guest)
+                db.session.commit()
     return '', 204
 
 
 @auth.route('/logout')
 @login_required
 def logout():
-    user = current_user._get_current_object()
+    is_guest = getattr(current_user, 'is_guest', False)
+    user_id = getattr(current_user, 'id', None)
     
-    if getattr(user, 'is_guest', False):
-        if hasattr(user, 'id') and user.id:
-            db.session.delete(user)
+    logout_user()
+    
+    if is_guest and user_id:
+        guest = User.query.get(user_id)
+        if guest:
+            db.session.delete(guest)
             db.session.commit()
         flash('Guest session ended. See you!', 'info')
     else:
         flash('You have been logged out.', 'info')
         
-    logout_user()
     return redirect(url_for('auth.login'))

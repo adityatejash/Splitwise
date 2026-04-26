@@ -71,32 +71,33 @@
 <!-- ── PENDING EDIT REQUESTS (ADMIN) ── -->
 {% if is_admin and pending_edits %}
 <div class="card" style="border-color:var(--yellow);margin-bottom:20px;">
-  <div class="card-title">⏳ Pending Edit Requests <span class="badge badge-pending">{{ pending_edits|length }}</span></div>
-  <table>
-    <thead><tr><th>Expense</th><th>Requested By</th><th>New Description</th><th>New Amount</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% for req in pending_edits %}
-      <tr>
-        <td><strong>{{ req.expense.description }}</strong></td>
-        <td>{{ req.requester.username }}</td>
-        <td>{{ req.new_description }}</td>
-        <td><strong>{{ req.new_currency }} {{ '%.2f'|format(req.new_amount|float) }}</strong></td>
-        <td>
-          <div style="display:flex;gap:6px;">
-            <form method="POST" action="{{ url_for('expenses.approve_request', request_id=req.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-              <button class="btn btn-success btn-xs">✓ Approve</button>
-            </form>
-            <form method="POST" action="{{ url_for('expenses.reject_request', request_id=req.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-              <button class="btn btn-danger btn-xs">✕ Reject</button>
-            </form>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table>
+      <thead><tr><th>Expense</th><th>Requested By</th><th>New Description</th><th>New Amount</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for req in pending_edits %}
+        <tr>
+          <td><strong>{{ req.expense.description }}</strong></td>
+          <td>{{ req.requester.username }}</td>
+          <td>{{ req.new_description }}</td>
+          <td><strong>{{ req.new_currency }} {{ '%.2f'|format(req.new_amount|float) }}</strong></td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <form method="POST" action="{{ url_for('expenses.approve_request', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-success btn-xs">✓ Approve</button>
+              </form>
+              <form method="POST" action="{{ url_for('expenses.reject_request', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-danger btn-xs">✕ Reject</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endif %}
 

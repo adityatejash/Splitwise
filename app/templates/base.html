@@ -7,6 +7,7 @@
   <meta name="description" content="Track shared expenses, split bills, and settle up with friends.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --bg: #faf7f2;
@@ -52,8 +53,28 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 60px;
+      min-height: 60px;
       box-shadow: 0 1px 4px rgba(26,26,46,0.06);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 1;
+      margin-left: 32px;
     }
     .nav-logo {
       font-family: 'Space Grotesk', sans-serif;
@@ -150,9 +171,45 @@
     /* ── GRID ── */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    @media (max-width: 680px) {
+    @media (max-width: 768px) {
       .grid-2, .grid-3 { grid-template-columns: 1fr; }
-      nav { padding: 0 16px; }
+      nav {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 16px;
+      }
+      .nav-brand {
+        width: 100%;
+      }
+      .hamburger {
+        display: block;
+      }
+      .nav-menu {
+        display: none;
+        flex-direction: column;
+        margin-left: 0;
+        margin-top: 16px;
+        gap: 16px;
+      }
+      .nav-menu.active {
+        display: flex;
+      }
+      .nav-links {
+        flex-direction: column;
+        width: 100%;
+        align-items: stretch;
+      }
+      .nav-link {
+        width: 100%;
+        text-align: left;
+        padding: 10px 12px;
+      }
+      .nav-user {
+        width: 100%;
+        justify-content: flex-start;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
       .container { padding: 20px 16px; }
     }
 
@@ -170,7 +227,9 @@
       cursor: pointer;
       transition: all 0.15s;
       text-decoration: none;
-      white-space: nowrap;
+      white-space: normal;
+      text-align: center;
+      justify-content: center;
     }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(224,122,95,0.35); }
@@ -348,13 +407,44 @@
 
     /* ── FOOTER ── */
     footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
       text-align: center;
-      padding: 24px;
+      padding: 32px 24px;
       color: var(--muted);
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       border-top: 1px solid var(--border);
       margin-top: 48px;
     }
+    .footer-text {
+      font-weight: 600;
+    }
+    .footer-icons {
+      display: flex;
+      gap: 16px;
+    }
+    .footer-icons a {
+      color: var(--muted);
+      font-size: 1.4rem;
+      transition: color 0.15s, transform 0.15s;
+    }
+    .footer-icons a:hover {
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+    
+    /* ── RESPONSIVE TABLES & CARDS ── */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .card {
+      word-wrap: break-word;
+    }
+    img, video { max-width: 100%; height: auto; }
 
     /* ── BACK LINK ── */
     .back-link {
@@ -375,18 +465,25 @@
 
 {% if current_user.is_authenticated %}
 <nav>
-  <a class="nav-logo" href="{{ url_for('main.dashboard') }}">💸 <span>Split</span>wise</a>
-  <div class="nav-links">
-    <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ url_for('groups.list_groups') }}">Groups</a>
-    <a class="nav-link" href="{{ url_for('groups.create_group') }}">+ New Group</a>
-    <a class="nav-link" href="{{ url_for('groups.join_by_code') }}">🔑 Join by Code</a>
+  <div class="nav-brand">
+    <a class="nav-logo" href="{{ url_for('main.dashboard') }}">💸 <span>Split</span>wise</a>
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+      <i class="fas fa-bars"></i>
+    </button>
   </div>
-  <div class="nav-user">
-    <div class="nav-avatar">{{ current_user.username[0].upper() }}</div>
-    <span>{{ current_user.username }}</span>
-    {% if current_user.is_guest %}<span class="badge badge-pending">Guest</span>{% endif %}
-    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+  <div class="nav-menu" id="nav-menu">
+    <div class="nav-links">
+      <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+      <a class="nav-link" href="{{ url_for('groups.list_groups') }}">Groups</a>
+      <a class="nav-link" href="{{ url_for('groups.create_group') }}">+ New Group</a>
+      <a class="nav-link" href="{{ url_for('groups.join_by_code') }}">🔑 Join by Code</a>
+    </div>
+    <div class="nav-user">
+      <div class="nav-avatar">{{ current_user.username[0].upper() }}</div>
+      <span>{{ current_user.username }}</span>
+      {% if current_user.is_guest %}<span class="badge badge-pending">Guest</span>{% endif %}
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+    </div>
   </div>
 </nav>
 {% if current_user.is_guest %}
@@ -415,9 +512,11 @@
 </div>
 
 <footer>
-  Developed by Aditya Prakash<br>
-  GitHub: <a href="https://github.com/adityatejash" target="_blank" style="color:var(--accent);">https://github.com/adityatejash</a> | 
-  LinkedIn: <a href="https://www.linkedin.com/in/adityatejash/" target="_blank" style="color:var(--accent);">adityatejash</a>
+  <div class="footer-text">Designed by Aditya Prakash</div>
+  <div class="footer-icons">
+    <a href="https://github.com/adityatejash" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+    <a href="https://www.linkedin.com/in/adityatejash/" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+  </div>
 </footer>
 
 {% if current_user.is_authenticated and current_user.is_guest %}
@@ -429,5 +528,16 @@
 </script>
 {% endif %}
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const hamburger = document.getElementById('hamburger');
+    const navMenu = document.getElementById('nav-menu');
+    if (hamburger && navMenu) {
+      hamburger.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+      });
+    }
+  });
+</script>
 </body>
 </html>

@@ -42,39 +42,41 @@
   <!-- Per-Member Summary -->
   <div class="card">
     <div class="card-title">📊 Member Summary</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Member</th>
-          <th>Paid</th>
-          <th>Owes</th>
-          <th>Net</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in net_summary %}
+    <div class="table-responsive">
+      <table>
+        <thead>
           <tr>
-            <td>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <div class="nav-avatar" style="width:26px;height:26px;font-size:0.72rem;flex-shrink:0;">{{ row.name[0].upper() }}</div>
-                {{ row.name }}
-              </div>
-            </td>
-            <td>{{ '%.2f'|format(row.total_paid) }}</td>
-            <td>{{ '%.2f'|format(row.total_owed) }}</td>
-            <td>
-              {% if row.net > 0 %}
-                <span class="amount-pos">+{{ '%.2f'|format(row.net) }}</span>
-              {% elif row.net < 0 %}
-                <span class="amount-neg">{{ '%.2f'|format(row.net) }}</span>
-              {% else %}
-                <span class="amount-neutral">0.00</span>
-              {% endif %}
-            </td>
+            <th>Member</th>
+            <th>Paid</th>
+            <th>Owes</th>
+            <th>Net</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% for row in net_summary %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="nav-avatar" style="width:26px;height:26px;font-size:0.72rem;flex-shrink:0;">{{ row.name[0].upper() }}</div>
+                  {{ row.name }}
+                </div>
+              </td>
+              <td>{{ '%.2f'|format(row.total_paid) }}</td>
+              <td>{{ '%.2f'|format(row.total_owed) }}</td>
+              <td>
+                {% if row.net > 0 %}
+                  <span class="amount-pos">+{{ '%.2f'|format(row.net) }}</span>
+                {% elif row.net < 0 %}
+                  <span class="amount-neg">{{ '%.2f'|format(row.net) }}</span>
+                {% else %}
+                  <span class="amount-neutral">0.00</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     <div style="font-size:0.78rem;color:var(--muted);margin-top:12px;">
       Positive = others owe you · Negative = you owe others
     </div>

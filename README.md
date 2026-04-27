@@ -6,7 +6,7 @@ A full-stack **group expense splitting web app** that lets friends, roommates, a
 
 ## 🌐 Live Demo
 
-🚀 **Live Website:** *https://splitwise-6bme.onrender.com*
+🚀 **Live Website:** [https://adityatejash-splitwise.up.railway.app](https://adityatejash-splitwise.up.railway.app)
 
 ---
 
@@ -34,13 +34,13 @@ A full-stack **group expense splitting web app** that lets friends, roommates, a
 * **PDF Generation:** ReportLab
 * **Security:** Flask-WTF (CSRF), Flask-Limiter, Werkzeug
 * **Templating:** Jinja2
-* **Deployment:** Render (Gunicorn)
+* **Deployment:** Railway (Gunicorn)
 
 ---
 
 ## ⚙️ How to Use
 
-1. Open the live website
+1. Open the [live website](https://adityatejash-splitwise.up.railway.app)
 2. Register an account or continue as a Guest
 3. Create a group and add members
 4. Log expenses and choose how to split them
@@ -66,7 +66,7 @@ Splitwise/
 ├── config.py                # App configuration
 ├── run.py                   # Entry point
 ├── requirements.txt
-├── Procfile                 # Render/Heroku deployment
+├── Procfile                 # Railway/Heroku deployment
 └── README.md
 ```
 
